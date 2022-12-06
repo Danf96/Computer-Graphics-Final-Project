@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        #the-canvas {border: 1px solid darkblue;}
+    </style>
+    <title>Final Project</title>
+    
+</head>
+<body>
+    <canvas id = "the-canvas" width = "1600" height = "900"></canvas>
+    <script src="light.js"></script>
+    <script src="cubemap.js"></script>
+    <script src="materials.js"></script>
+    <script src="input.js"></script>
+    <script src="scene.js"></script>
+    <script src="mymatrix.js" ></script>
+    <script src="myvector.js" ></script>
+    <script src="uv_mesh.js"></script>
+    <script src="lib.js"></script>
+    <script>
+        //yaw = heading
+        //pitch = pitch
+        //roll = bank
+        let canvas = document.getElementById('the-canvas');
+        /** @type {WebGLRenderingContext}*/
+        let gl = canvas.getContext('webgl2');
+        
+        let dromed_controls = {
+            'KeyW': function(){camera.moveInDir(0.0, 0.0, 0.25);},
+            'KeyS': function(){camera.moveInDir(0.0, 0.0, 0.15);},
+            'KeyX': function(){camera.moveInDir(0.0, 0.0, -0.15);},
+            'KeyZ': function(){camera.moveInDir(-0.15, 0.0, 0.0);},
+            'KeyC': function(){camera.moveInDir(0.15, 0.0, 0.0);},
+            'KeyA': function(){camera.rotateHeading(-0.0020);},
+            'KeyD': function(){camera.rotateHeading(0.0020);},
+            'KeyQ': function(){camera.moveInDir(0.0, 0.15, 0.0);},
+            'KeyE': function(){camera.moveInDir(0.0, -0.15, 0.0);},
+            'KeyR': function(){camera.rotatePitch(0.0020);},
+            'KeyV': function(){camera.rotatePitch(-0.0020);},
+            'Digit3': function(){camera.rotateBank(0.0020);},
+            'Digit1': function(){camera.rotateBank(-0.0020);},
+            'KeyF': function(){camera.resetPitch();},
+            'Digit2': function(){camera.resetBank();},
+            'KeyP': function(){swapCamera();}
+        }
+        let assignment_controls = {
+            'KeyW': function(){camera.moveInDir(0.0, 0.0, 0.25);},
+            'KeyS': function(){camera.moveInDir(0.0, 0.0, -0.15);},
+            'KeyA': function(){camera.moveInDir(-0.15, 0.0, 0.0);},
+            'KeyD': function(){camera.moveInDir(0.15, 0.0, 0.0);},
+            'ArrowLeft': function(){camera.rotateHeading(-0.0018);},
+            'ArrowRight': function(){camera.rotateHeading(0.0018);},
+            'KeyC': function(){camera.moveInDir(0.0, -0.15, 0.0);},
+            'Space': function(){camera.moveInDir(0.0, 0.15, 0.0);},
+            'ArrowDown': function(){camera.rotatePitch(0.0018);},
+            'ArrowUp': function(){camera.rotatePitch(-0.0018);},
+            'KeyE': function(){camera.rotateBank(0.0018);},
+            'KeyQ': function(){camera.rotateBank(-0.0018);},
+            'KeyP': function(){swapCamera();}
+        }
+        let vertex_source = 
+        `   #version 300 es
+            precision mediump float;
+
+            uniform mat4 modelview; //this is the matrix
+            uniform mat4 model;
+            uniform vec3 camera;
+
+            in vec3 coordinates;
+            in vec2 uv;
+            in vec3 normal;
+
+            out vec2 v_uv;
+            out vec3 normal_tx;
+            out vec3 coords_tx;
+            out vec3 frag_pos;
+
+            void main( void ) {//vv do the vector multiplication
+                gl_Position = modelview * vec4( coordinates, 1.0 );
+                v_uv = uv;
+                normal_tx = normalize(mat3(model) * normal);
+                coords_tx = (model * vec4(camera, 1.0)).xyz;
+                frag_pos = vec3(model * vec4(coordinates, 1.0));
+            }
+        `;
+        
+        let fragment_source = 
+        `   #version 300 es
+            precision mediump float;
+
+            uniform sampler2D tex_0;
+            uniform float mat_ambient;
+            uniform float mat_diffuse;
+            uniform float mat_specular;
+            uniform float mat_shininess;
+            uniform mat4 model;
+
+            uniform vec3 light_pos[8];
+            uniform vec3 light_color[8];
+
+
+            const float const_k = 1.0;
+            const float lin_l = 0.09;
+            const float quad_q = 0.032;
+
+
+            out vec4 f_color;
+            in vec2 v_uv;
+            in vec3 normal_tx;
+            in vec3 coords_tx;
+            in vec3 frag_pos;
+
+            vec3 diff_color(vec3 normal, vec3 light_pos, vec3 light_color){
+                return mat_diffuse * light_color * max(dot(normal, normalize(light_pos - frag_pos)), 0.0);
+            }
+            
+            vec3 spec_color(vec3 normal, vec3 eye_coords, vec3 light_pos, vec3 light_color){
+                vec3 light_dir = light_pos - vec3(frag_pos);
+                float cos_light_surf_normal = dot(normal, light_dir);
+                if(cos_light_surf_normal <= 0.0){
+                    return vec3(0.0, 0.0, 0.0);
+                }
+                vec3 camVec = normalize(eye_coords - frag_pos); 
+                vec3 sourceVec = normalize(light_dir - frag_pos); 
+                vec3 refVec = reflect(-sourceVec, normal);
+                return mat_specular * pow(max(dot(camVec, refVec),0.0), mat_shininess) * light_color;
+            
+            }
+            vec3 attenuate(float intensity, float distance){
+                float atten = intensity/(const_k + lin_l + distance * quad_q * pow(distance,2.0));
+                return vec3(atten, atten, atten);
+            }
+
+            void main( void ) { //used https://learnopengl.com/Lighting/Light-casters to fix vectors
+                vec3 attenuation;
+                vec3 pos_ambient_color;
+                vec3 pos_diffuse;
+                vec3 pos_specular;
+                vec3 phong = vec3(0.0, 0.0, 0.0);
+                for(int i = 0; i < 5; i++){
+                    attenuation = attenuate(4.0, length(light_pos[i] - frag_pos));
+                    pos_ambient_color = vec3( mat_ambient, mat_ambient, mat_ambient) * light_color[i];
+                    pos_diffuse = diff_color(normal_tx, light_pos[i], light_color[i]);
+                    pos_specular = spec_color(normal_tx, coords_tx, light_pos[i], light_color[i]);
+                    phong = phong + (pos_diffuse * attenuation + pos_specular * attenuation + pos_ambient_color * attenuation);
+                }
+                f_color = vec4(texture(tex_0, v_uv).xyz  * (phong + vec3(1.50, 1.50, 1.50)), 1.0);
+            }
+        `;
+        //shaders below taken from https://learnopengl.com/Advanced-OpenGL/Cubemaps
+        let vertex_cube =
+        `   #version 300 es
+            in vec3 coordinates;
+
+            out vec3 coords_tx;
+
+            uniform mat4 projection;
+            uniform mat4 view;
+
+            void main(){
+                coords_tx = coordinates;
+                gl_Position = projection * view * vec4(coordinates, 1.0);
+            }  
+        `;
+        let fragment_cube =
+        `   #version 300 es
+            precision mediump float;
+            out vec4 f_color;
+
+            in vec3 coords_tx;
+
+            uniform samplerCube skybox;
+
+            void main(){    
+                f_color = texture(skybox, coords_tx);
+            }
+        `;
+
+        let shader_program = create_compile_and_link_program( gl, vertex_source, fragment_source );
+        let skybox_program = create_compile_and_link_program( gl, vertex_cube, fragment_cube );
+
+        gl.useProgram(skybox_program);
+        let sky = new CubeMap(gl, gl.LINEAR, skybox_program);
+        gl.useProgram(shader_program);
+        set_render_params( gl );
+        
+
+        
+
+        const fovy = 0.125;
+        const aspect_r = (16/9);
+        const d_near = 0.125;
+        const d_far = 1000;
+
+        const DESIRED_TICK_RATE = 60;
+        const DESIRED_MSPT = 1000.0 / DESIRED_TICK_RATE;
+        var ext = (
+            gl.getExtension('EXT_texture_filter_anisotropic') ||
+            gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
+            gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')
+        );
+        let myTex = null;
+        if (ext){
+            myTex = new Material(gl, 'tex/missmainexport.baked.jpg', ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT, 0.25, 1.0, 2.0, 4.0);
+        }
+        else{
+            myTex = new Material(gl, 'tex/missmainexport.baked.jpg', gl.LINEAR_MIPMAP_LINEAR, 0.25, 1.0, 2.0, 4.0);
+        }
+        let sphereTex = new Material(gl, '/tex/face.jpg', ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT, 0.40, 1.0, 2.0, 4.0);
+        
+        let mesh = null;
+        function f(newmesh){
+            myScene.createNode(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, newmesh);
+        }
+        myScene = new Scene();
+        let camera = myScene.createNode(-172.0, -14.5, -102.0, 0.10, 0.0, 0.0, 1.0, 1.0, 1.0, new Light( 0.7, 0.7, 0.7));
+        //let camera = myScene.createNode(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light( 0.7, 0.7, 0.7));
+        camera.createChildNode(0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 3.0, 3.0, 3.0, Mesh.sphere(gl, shader_program, 8, sphereTex));
+        myScene.setCameraNode(camera);
+        
+        
+        Mesh.from_obj_file(gl, "map.obj", shader_program, f, myTex);
+        let spintest = myScene.createNode(0.0, -35.0, 15.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, null);
+        spintest.createChildNode(2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 3.0, 3.0, Mesh.sphere(gl, shader_program, 8, sphereTex)).createChildNode(0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,1.0, new Light(0.0, 0.0, 0.5));
+        spintest.createChildNode(-3.0, 0.0, 0.0, 0.5, 0.0, 0.0, 2.0, 2.0, 2.0, Mesh.sphere(gl, shader_program, 8, sphereTex)).createChildNode(-2.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,1.0, new Light(0.0, 0.7, 0.0));
+
+        myScene.createNode(-60.0, 0.0, -60.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light( 0.0, 1.0, 0.0))
+        let cam_light = myScene.createNode(-40.0, 0.0, -60.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light( 1.0, 0.0, 0.0));
+        cam_light.createChildNode(0.0,0.0,0.0,0.25,0.0,0.0,3.0,3.0,3.0, Mesh.sphere(gl, shader_program, 8, sphereTex));
+
+
+        const projection = Mat4.perspective(fovy, aspect_r, d_near, d_far);
+
+        function render(now){ //loop that binds all the lights then binds all the meshes after batch is called
+            
+            requestAnimationFrame(render);
+            last_update = now;
+            let jobs = [];
+            let lights = [];
+            let colors = [];
+            let positions = [];
+
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            let view = myScene.getCameraView();
+            set_uniform_matrix4(gl, skybox_program, "projection", projection.data);
+            set_uniform_matrix4(gl, skybox_program, "view", view.data);
+            sky.render(gl);
+
+            myScene.generateRenderBatch(jobs, lights);
+            
+            
+            
+
+            
+            set_uniform_vec3(gl, shader_program, "camera", camera.x, camera.y, camera.z);
+
+            for(let light of lights){
+                positions.push(light.loc.x, light.loc.y, light.loc.z);
+                colors.push(light.color[0], light.color[1], light.color[2]);
+            }
+            
+            set_uniform_array_vec3(gl, shader_program, "light_color", colors);
+            set_uniform_array_vec3(gl, shader_program, "light_pos", positions);
+
+            for(let job of jobs){
+                let model = job.matrix;
+                set_uniform_matrix4(gl, shader_program, "model", model.data);
+                let modelview = view.mul(model);
+                let new_modelview = projection.mul(modelview);
+                set_uniform_matrix4(gl, shader_program, "modelview", new_modelview.data);
+                job.mesh.render(gl);
+            }
+        } 
+
+        function update(){
+            let pressed_keys = keysPressed.key_down_list();
+
+            for(const key of pressed_keys){
+                let dict_function = dromed_controls[key];
+                if(dict_function){
+                    dict_function();
+                }
+            }
+            spintest.rotateHeading(0.005);
+            return;
+        }
+        function sleep(delay) { //code taken online from stackoverflow
+            var start = new Date().getTime();
+            while (new Date().getTime() < start + delay);
+        }
+        function swapCamera(){
+            let temp = camera;
+            myScene.setCameraNode(cam_light);
+            camera = cam_light;
+            cam_light = temp;
+            sleep(250);
+        }
+
+        let last_update = performance.now();
+        
+        let time_delta = 0;
+        let keysPressed = Keys.start_listening();
+        setInterval(update, DESIRED_MSPT);
+        requestAnimationFrame(render);
+
+    </script>
+</body>
+</html>
