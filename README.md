@@ -1,4 +1,6 @@
 # Computer-Graphics-Final-Project
+![image](https://github.com/Danf96/Computer-Graphics-Final-Project/assets/8466937/82f7b4d5-00e8-4b76-b8df-132679b13481)
+
 - Final project was to develop a scene with at least one advanced feature. I wrote my own OBJ parser and imported a custom mission from Thief: The Dark Project.
 - Project takes advantage of a scene graph, dynamic lights using phong shading, a skybox, camera switching.
 - NOTE: uses code provided by professor, all parts were initially developed by me (with the exception of most functions inside lib.js) but as the professor provided examples of his implementations, code was updated to allow for more versatility and better performance.
