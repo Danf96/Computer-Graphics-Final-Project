@@ -1,21 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <style>
-        #the-canvas {border: 1px solid darkblue;}
+        #the-canvas {
+            border: 1px solid darkblue;
+        }
     </style>
     <title>Final Project</title>
-    
+
 </head>
+
 <body>
-    <canvas id = "the-canvas" width = "1600" height = "900"></canvas>
+    <canvas id="the-canvas" width="1600" height="900"></canvas>
     <script src="light.js"></script>
     <script src="cubemap.js"></script>
     <script src="materials.js"></script>
     <script src="input.js"></script>
     <script src="scene.js"></script>
-    <script src="mymatrix.js" ></script>
-    <script src="myvector.js" ></script>
+    <script src="mymatrix.js"></script>
+    <script src="myvector.js"></script>
     <script src="uv_mesh.js"></script>
     <script src="lib.js"></script>
     <script>
@@ -25,42 +29,42 @@
         let canvas = document.getElementById('the-canvas');
         /** @type {WebGLRenderingContext}*/
         let gl = canvas.getContext('webgl2');
-        
+
         let dromed_controls = {
-            'KeyW': function(){camera.moveInDir(0.0, 0.0, 0.25);},
-            'KeyS': function(){camera.moveInDir(0.0, 0.0, 0.15);},
-            'KeyX': function(){camera.moveInDir(0.0, 0.0, -0.15);},
-            'KeyZ': function(){camera.moveInDir(-0.15, 0.0, 0.0);},
-            'KeyC': function(){camera.moveInDir(0.15, 0.0, 0.0);},
-            'KeyA': function(){camera.rotateHeading(-0.0020);},
-            'KeyD': function(){camera.rotateHeading(0.0020);},
-            'KeyQ': function(){camera.moveInDir(0.0, 0.15, 0.0);},
-            'KeyE': function(){camera.moveInDir(0.0, -0.15, 0.0);},
-            'KeyR': function(){camera.rotatePitch(0.0020);},
-            'KeyV': function(){camera.rotatePitch(-0.0020);},
-            'Digit3': function(){camera.rotateBank(0.0020);},
-            'Digit1': function(){camera.rotateBank(-0.0020);},
-            'KeyF': function(){camera.resetPitch();},
-            'Digit2': function(){camera.resetBank();},
-            'KeyP': function(){swapCamera();}
+            'KeyW': function () { camera.moveInDir(0.0, 0.0, 0.25); },
+            'KeyS': function () { camera.moveInDir(0.0, 0.0, 0.15); },
+            'KeyX': function () { camera.moveInDir(0.0, 0.0, -0.15); },
+            'KeyZ': function () { camera.moveInDir(-0.15, 0.0, 0.0); },
+            'KeyC': function () { camera.moveInDir(0.15, 0.0, 0.0); },
+            'KeyA': function () { camera.rotateHeading(-0.0020); },
+            'KeyD': function () { camera.rotateHeading(0.0020); },
+            'KeyQ': function () { camera.moveInDir(0.0, 0.15, 0.0); },
+            'KeyE': function () { camera.moveInDir(0.0, -0.15, 0.0); },
+            'KeyR': function () { camera.rotatePitch(0.0020); },
+            'KeyV': function () { camera.rotatePitch(-0.0020); },
+            'Digit3': function () { camera.rotateBank(0.0020); },
+            'Digit1': function () { camera.rotateBank(-0.0020); },
+            'KeyF': function () { camera.resetPitch(); },
+            'Digit2': function () { camera.resetBank(); },
+            'KeyP': function () { swapCamera(); }
         }
         let assignment_controls = {
-            'KeyW': function(){camera.moveInDir(0.0, 0.0, 0.25);},
-            'KeyS': function(){camera.moveInDir(0.0, 0.0, -0.15);},
-            'KeyA': function(){camera.moveInDir(-0.15, 0.0, 0.0);},
-            'KeyD': function(){camera.moveInDir(0.15, 0.0, 0.0);},
-            'ArrowLeft': function(){camera.rotateHeading(-0.0018);},
-            'ArrowRight': function(){camera.rotateHeading(0.0018);},
-            'KeyC': function(){camera.moveInDir(0.0, -0.15, 0.0);},
-            'Space': function(){camera.moveInDir(0.0, 0.15, 0.0);},
-            'ArrowDown': function(){camera.rotatePitch(0.0018);},
-            'ArrowUp': function(){camera.rotatePitch(-0.0018);},
-            'KeyE': function(){camera.rotateBank(0.0018);},
-            'KeyQ': function(){camera.rotateBank(-0.0018);},
-            'KeyP': function(){swapCamera();}
+            'KeyW': function () { camera.moveInDir(0.0, 0.0, 0.25); },
+            'KeyS': function () { camera.moveInDir(0.0, 0.0, -0.15); },
+            'KeyA': function () { camera.moveInDir(-0.15, 0.0, 0.0); },
+            'KeyD': function () { camera.moveInDir(0.15, 0.0, 0.0); },
+            'ArrowLeft': function () { camera.rotateHeading(-0.0018); },
+            'ArrowRight': function () { camera.rotateHeading(0.0018); },
+            'KeyC': function () { camera.moveInDir(0.0, -0.15, 0.0); },
+            'Space': function () { camera.moveInDir(0.0, 0.15, 0.0); },
+            'ArrowDown': function () { camera.rotatePitch(0.0018); },
+            'ArrowUp': function () { camera.rotatePitch(-0.0018); },
+            'KeyE': function () { camera.rotateBank(0.0018); },
+            'KeyQ': function () { camera.rotateBank(-0.0018); },
+            'KeyP': function () { swapCamera(); }
         }
-        let vertex_source = 
-        `   #version 300 es
+        let vertex_source =
+            `#version 300 es
             precision mediump float;
 
             uniform mat4 modelview; //this is the matrix
@@ -84,9 +88,9 @@
                 frag_pos = vec3(model * vec4(coordinates, 1.0));
             }
         `;
-        
-        let fragment_source = 
-        `   #version 300 es
+
+        let fragment_source =
+            `#version 300 es
             precision mediump float;
 
             uniform sampler2D tex_0;
@@ -145,51 +149,55 @@
                     pos_specular = spec_color(normal_tx, coords_tx, light_pos[i], light_color[i]);
                     phong = phong + (pos_diffuse * attenuation + pos_specular * attenuation + pos_ambient_color * attenuation);
                 }
-                f_color = vec4(texture(tex_0, v_uv).xyz  * (phong + vec3(1.50, 1.50, 1.50)), 1.0);
+                f_color = vec4(texture(tex_0, v_uv).xyz  * (phong + vec3(0.4, 0.4, 0.4)), 1.0);
             }
         `;
-        //shaders below taken from https://learnopengl.com/Advanced-OpenGL/Cubemaps
-        let vertex_cube =
-        `   #version 300 es
-            in vec3 coordinates;
 
-            out vec3 coords_tx;
+        let vertex_cube =
+            `#version 300 es
+            in vec3 vert_pos;
+
+            out vec3 frag_pos;
 
             uniform mat4 projection;
             uniform mat4 view;
 
             void main(){
-                coords_tx = coordinates;
-                gl_Position = projection * view * vec4(coordinates, 1.0);
-            }  
+                frag_pos = vert_pos;
+                mat4 rot_view = mat4(mat3(view));
+                vec4 clip_pos = projection * rot_view * vec4(vert_pos, 1.0);
+                gl_Position = clip_pos.xyww;
+            }
         `;
         let fragment_cube =
-        `   #version 300 es
+            `#version 300 es
             precision mediump float;
             out vec4 f_color;
 
-            in vec3 coords_tx;
+            in vec3 frag_pos;
 
             uniform samplerCube skybox;
 
-            void main(){    
-                f_color = texture(skybox, coords_tx);
+            void main(){
+                vec3 color = vec3(0.0);    
+                color = texture(skybox, frag_pos).rgb;
+                f_color = vec4(color, 1.0);
             }
         `;
 
-        let shader_program = create_compile_and_link_program( gl, vertex_source, fragment_source );
-        let skybox_program = create_compile_and_link_program( gl, vertex_cube, fragment_cube );
+        let shader_program = create_compile_and_link_program(gl, vertex_source, fragment_source);
+        let skybox_program = create_compile_and_link_program(gl, vertex_cube, fragment_cube);
 
-        gl.useProgram(skybox_program);
+        // gl.useProgram(skybox_program);
         let sky = new CubeMap(gl, gl.LINEAR, skybox_program);
-        gl.useProgram(shader_program);
-        set_render_params( gl );
-        
+        // gl.useProgram(shader_program);
+        set_render_params(gl);
 
-        
+
+
 
         const fovy = 0.125;
-        const aspect_r = (16/9);
+        const aspect_r = (16 / 9);
         const d_near = 0.125;
         const d_far = 1000;
 
@@ -201,39 +209,39 @@
             gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')
         );
         let myTex = null;
-        if (ext){
+        if (ext) {
             myTex = new Material(gl, 'tex/missmainexport.baked.jpg', ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT, 0.25, 1.0, 2.0, 4.0);
         }
-        else{
+        else {
             myTex = new Material(gl, 'tex/missmainexport.baked.jpg', gl.LINEAR_MIPMAP_LINEAR, 0.25, 1.0, 2.0, 4.0);
         }
         let sphereTex = new Material(gl, '/tex/face.jpg', ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT, 0.40, 1.0, 2.0, 4.0);
-        
+
         let mesh = null;
-        function f(newmesh){
+        function f(newmesh) {
             myScene.createNode(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, newmesh);
         }
         myScene = new Scene();
-        let camera = myScene.createNode(-172.0, -14.5, -102.0, 0.10, 0.0, 0.0, 1.0, 1.0, 1.0, new Light( 0.7, 0.7, 0.7));
+        let camera = myScene.createNode(-172.0, -14.5, -102.0, 0.10, 0.0, 0.0, 1.0, 1.0, 1.0, new Light(0.7, 0.7, 0.7));
         //let camera = myScene.createNode(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light( 0.7, 0.7, 0.7));
         camera.createChildNode(0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 3.0, 3.0, 3.0, Mesh.sphere(gl, shader_program, 8, sphereTex));
         myScene.setCameraNode(camera);
-        
-        
+
+
         Mesh.from_obj_file(gl, "map.obj", shader_program, f, myTex);
         let spintest = myScene.createNode(0.0, -35.0, 15.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, null);
-        spintest.createChildNode(2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 3.0, 3.0, Mesh.sphere(gl, shader_program, 8, sphereTex)).createChildNode(0.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,1.0, new Light(0.0, 0.0, 0.5));
-        spintest.createChildNode(-3.0, 0.0, 0.0, 0.5, 0.0, 0.0, 2.0, 2.0, 2.0, Mesh.sphere(gl, shader_program, 8, sphereTex)).createChildNode(-2.0,0.0,0.0,0.0,0.0,0.0,1.0,1.0,1.0, new Light(0.0, 0.7, 0.0));
+        spintest.createChildNode(2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 3.0, 3.0, 3.0, Mesh.sphere(gl, shader_program, 8, sphereTex)).createChildNode(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light(0.0, 0.0, 0.5));
+        spintest.createChildNode(-3.0, 0.0, 0.0, 0.5, 0.0, 0.0, 2.0, 2.0, 2.0, Mesh.sphere(gl, shader_program, 8, sphereTex)).createChildNode(-2.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light(0.0, 0.7, 0.0));
 
-        myScene.createNode(-60.0, 0.0, -60.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light( 0.0, 1.0, 0.0))
-        let cam_light = myScene.createNode(-40.0, 0.0, -60.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light( 1.0, 0.0, 0.0));
-        cam_light.createChildNode(0.0,0.0,0.0,0.25,0.0,0.0,3.0,3.0,3.0, Mesh.sphere(gl, shader_program, 8, sphereTex));
+        myScene.createNode(-60.0, 0.0, -60.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light(0.0, 1.0, 0.0))
+        let cam_light = myScene.createNode(-40.0, 0.0, -60.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, new Light(1.0, 0.0, 0.0));
+        cam_light.createChildNode(0.0, 0.0, 0.0, 0.25, 0.0, 0.0, 3.0, 3.0, 3.0, Mesh.sphere(gl, shader_program, 8, sphereTex));
 
 
         const projection = Mat4.perspective(fovy, aspect_r, d_near, d_far);
 
-        function render(now){ //loop that binds all the lights then binds all the meshes after batch is called
-            
+        function render(now) { //loop that binds all the lights then binds all the meshes after batch is called
+
             requestAnimationFrame(render);
             last_update = now;
             let jobs = [];
@@ -243,27 +251,28 @@
 
             gl.clear(gl.COLOR_BUFFER_BIT);
             let view = myScene.getCameraView();
+            gl.useProgram(shader_program);
             set_uniform_matrix4(gl, skybox_program, "projection", projection.data);
             set_uniform_matrix4(gl, skybox_program, "view", view.data);
-            sky.render(gl);
+
 
             myScene.generateRenderBatch(jobs, lights);
-            
-            
-            
 
-            
+
+
+
+
             set_uniform_vec3(gl, shader_program, "camera", camera.x, camera.y, camera.z);
 
-            for(let light of lights){
+            for (let light of lights) {
                 positions.push(light.loc.x, light.loc.y, light.loc.z);
                 colors.push(light.color[0], light.color[1], light.color[2]);
             }
-            
+
             set_uniform_array_vec3(gl, shader_program, "light_color", colors);
             set_uniform_array_vec3(gl, shader_program, "light_pos", positions);
 
-            for(let job of jobs){
+            for (let job of jobs) {
                 let model = job.matrix;
                 set_uniform_matrix4(gl, shader_program, "model", model.data);
                 let modelview = view.mul(model);
@@ -271,14 +280,17 @@
                 set_uniform_matrix4(gl, shader_program, "modelview", new_modelview.data);
                 job.mesh.render(gl);
             }
-        } 
 
-        function update(){
+            sky.render(gl);
+
+        }
+
+        function update() {
             let pressed_keys = keysPressed.key_down_list();
 
-            for(const key of pressed_keys){
+            for (const key of pressed_keys) {
                 let dict_function = dromed_controls[key];
-                if(dict_function){
+                if (dict_function) {
                     dict_function();
                 }
             }
@@ -289,7 +301,7 @@
             var start = new Date().getTime();
             while (new Date().getTime() < start + delay);
         }
-        function swapCamera(){
+        function swapCamera() {
             let temp = camera;
             myScene.setCameraNode(cam_light);
             camera = cam_light;
@@ -298,7 +310,7 @@
         }
 
         let last_update = performance.now();
-        
+
         let time_delta = 0;
         let keysPressed = Keys.start_listening();
         setInterval(update, DESIRED_MSPT);
@@ -306,4 +318,5 @@
 
     </script>
 </body>
+
 </html>

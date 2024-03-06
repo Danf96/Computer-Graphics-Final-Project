@@ -10,21 +10,21 @@ class Mesh {
      * @param {number[]} vertices
      * @param {number[]} indices
     */
-    constructor( gl, program, vertices, indices, material) {
-        this.verts = create_and_load_vertex_buffer( gl, vertices, gl.STATIC_DRAW );
-        this.indis = create_and_load_elements_buffer( gl, indices, gl.STATIC_DRAW );
-        
+    constructor(gl, program, vertices, indices, material) {
+        this.verts = create_and_load_vertex_buffer(gl, vertices, gl.STATIC_DRAW);
+        this.indis = create_and_load_elements_buffer(gl, indices, gl.STATIC_DRAW);
+
         this.n_verts = vertices.length;
         this.n_indis = indices.length;
         this.program = program;
         this.material = material;
     }
-    set_vertex_attributes(){
-        set_vertex_attrib_to_buffer( 
-            gl, this.program, 
-            "coordinates", 
-            this.verts, 3, 
-            gl.FLOAT, false, VERTEX_STRIDE, 0 
+    set_vertex_attributes() {
+        set_vertex_attrib_to_buffer(
+            gl, this.program,
+            "coordinates",
+            this.verts, 3,
+            gl.FLOAT, false, VERTEX_STRIDE, 0
         );
 
         /*set_vertex_attrib_to_buffer( 
@@ -34,16 +34,16 @@ class Mesh {
             gl.FLOAT, false, VERTEX_STRIDE, 12
         );*/
 
-        set_vertex_attrib_to_buffer( 
-            gl, this.program, 
-            "uv", 
-            this.verts, 2, 
+        set_vertex_attrib_to_buffer(
+            gl, this.program,
+            "uv",
+            this.verts, 2,
             gl.FLOAT, false, VERTEX_STRIDE, 12
         );
-        set_vertex_attrib_to_buffer( 
-            gl, this.program, 
-            "normal", 
-            this.verts, 3, 
+        set_vertex_attrib_to_buffer(
+            gl, this.program,
+            "normal",
+            this.verts, 3,
             gl.FLOAT, false, VERTEX_STRIDE, 20
         );
     }
@@ -56,7 +56,7 @@ class Mesh {
      * @param {number} depth 
      */
 
-    static box_quads( gl, program, width, height, depth, material ) {
+    static box_quads(gl, program, width, height, depth, material) {
         let hwidth = width / 2.0;
         let hheight = height / 2.0;
         let hdepth = depth / 2.0;
@@ -105,10 +105,10 @@ class Mesh {
             20, 22, 21, 22, 20, 23
         ];
 
-        return new Mesh( gl, program, verts, indis, material );
+        return new Mesh(gl, program, verts, indis, material);
     }
 
-    static sphere( gl, program, subdivs, material ){ //looked at reference on slides: https://www.danielsieger.com/blog/2021/03/27/generating-spheres.html as well as http://www.songho.ca/opengl/gl_sphere.html
+    static sphere(gl, program, subdivs, material) { //looked at reference on slides: https://www.danielsieger.com/blog/2021/03/27/generating-spheres.html as well as http://www.songho.ca/opengl/gl_sphere.html
         //let topVert = [0,1,0];
         //let indexNum = 0;
         //verts.push(topVert, 1, 1, 1, 1, 0,0.5, 0,1,0); //verts, colors, uv, normal
@@ -127,43 +127,43 @@ class Mesh {
         let indis = [];
         const tau = Math.PI * 2;
         const len = 2;
-        
-        for(let layer = 0; layer <= subdivs; layer++){
-            let y_turns = layer/subdivs/2;
-            let y = Math.cos(y_turns * tau)/2;
-            let theta = Math.sin(y_turns * tau)/2;
-            for(let subdiv = 0; subdiv <= subdivs + 1; subdiv++){
+
+        for (let layer = 0; layer <= subdivs; layer++) {
+            let y_turns = layer / subdivs / 2;
+            let y = Math.cos(y_turns * tau) / 2;
+            let theta = Math.sin(y_turns * tau) / 2;
+            for (let subdiv = 0; subdiv <= subdivs + 1; subdiv++) {
                 let turns = subdiv / subdivs;
                 let rads = turns * tau;
                 let x = Math.cos(rads) * theta;
                 let z = Math.sin(rads) * theta;
-                verts.push(x,y,z);
+                verts.push(x, y, z);
                 let u = subdiv / subdivs;
                 let v = layer / subdivs;
-                verts.push(u,v);
-                let norm_x = x/len;
-                let norm_y = y/len;
-                let norm_z = z/len;
-                verts.push(norm_x,norm_y,norm_z);
+                verts.push(u, v);
+                let norm_x = x / len;
+                let norm_y = y / len;
+                let norm_z = z / len;
+                verts.push(norm_x, norm_y, norm_z);
             }
         }
 
-        for(let n = 0; n < subdivs; n++){
-            let i1 = n * (subdivs+2); //current stack start
-            let i2 = i1 + subdivs+2; //next stack start
-            for(let j = 0; j < subdivs + 1; j++, i1++, i2++){
-                if (n != 0){
-                    indis.push(i2, i1+1, i1);
+        for (let n = 0; n < subdivs; n++) {
+            let i1 = n * (subdivs + 2); //current stack start
+            let i2 = i1 + subdivs + 2; //next stack start
+            for (let j = 0; j < subdivs + 1; j++, i1++, i2++) {
+                if (n != 0) {
+                    indis.push(i2, i1 + 1, i1);
                 }
-                if (n != (subdivs-1)){
-                    indis.push(i2, i2+1, i1+1);
+                if (n != (subdivs - 1)) {
+                    indis.push(i2, i2 + 1, i1 + 1);
                 }
             }
         }
         //console.log(indis);
         //let botVert = [0,-1,0] //need to add indis too
 
-        return new Mesh( gl, program, verts, indis, material );
+        return new Mesh(gl, program, verts, indis, material);
 
     }
 
@@ -174,21 +174,21 @@ class Mesh {
      * 
      * @param {WebGLRenderingContext} gl 
      */
-    render( gl ) {
-        const old_prog = gl.getParameter( gl.CURRENT_PROGRAM );
-        gl.useProgram( this.program );
-        gl.cullFace( gl.BACK );
-        gl.enable( gl.CULL_FACE );
+    render(gl) {
+        // const old_prog = gl.getParameter( gl.CURRENT_PROGRAM );
+        gl.useProgram(this.program);
+        gl.cullFace(gl.BACK);
+        gl.enable(gl.CULL_FACE);
         this.set_vertex_attributes();
-        gl.bindBuffer( gl.ARRAY_BUFFER, this.verts );
-        gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, this.indis );
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.verts);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indis);
         bind_texture_samplers(gl, this.program, "tex_0");
 
         gl.activeTexture(gl.TEXTURE0);
         this.material.bind(gl);
 
-        gl.drawElements( gl.TRIANGLES, this.n_indis, gl.UNSIGNED_SHORT, 0 );
-        gl.useProgram( old_prog );
+        gl.drawElements(gl.TRIANGLES, this.n_indis, gl.UNSIGNED_SHORT, 0);
+        gl.useProgram(null);
     }
 
     /**
@@ -197,16 +197,16 @@ class Mesh {
      * @param {WebGLProgram} program
      * @param {string} text
      */
-    static from_obj_text( gl, program, text, material ) { //used https://github.com/chinedufn/wavefront-obj-parser/ in order to implement wavefront indices
+    static from_obj_text(gl, program, text, material) { //used https://github.com/chinedufn/wavefront-obj-parser/ in order to implement wavefront indices
         // create verts and indis from the text 
-		
-		let verts = [];
+
+        let verts = [];
         let vertNorms = [];
         let vertUVs = [];
-		let indis = [];
+        let indis = [];
         let finalVerts = [];
         let faceNum = {
-            val : 2
+            val: 2
         }
         let lines = text.split(/\r?\n/);
         lines.forEach(line => Mesh.parse_line(line, verts, indis, vertUVs, vertNorms, finalVerts, faceNum));
@@ -214,21 +214,21 @@ class Mesh {
         //console.log(indis);
         //exit(1);
         //indis.pop();
-        return new Mesh( gl, program, finalVerts, indis, material );
+        return new Mesh(gl, program, finalVerts, indis, material);
     }
 
-    static parse_line(line, verts, indis, vertUVs, vertNorms, finalVerts, faceNum){
+    static parse_line(line, verts, indis, vertUVs, vertNorms, finalVerts, faceNum) {
         line = line.trim();
         //ask about checking first element for comment before trimming
         line = line.split(/(\s+)/);
-        if(line[0] === 'v'){
+        if (line[0] === 'v') {
             let parts_of_line = line; //.split(/(\s+)/);
             //console.log(parts_of_line);
-            for(let i = 2; i < 7; i = i + 2){
-                if(i == 2){
+            for (let i = 2; i < 7; i = i + 2) {
+                if (i == 2) {
                     verts.push(parseFloat(parts_of_line[i]));
                 }
-                else{
+                else {
                     verts.push(parseFloat(parts_of_line[i]));
                 }
             }
@@ -238,32 +238,32 @@ class Mesh {
             
             verts.push(1.0);*/
         }
-        else if(line[0] === 'f'){
+        else if (line[0] === 'f') {
 
             let parts_of_line = line; //.split(/(\s+)/);
             //console.log(parts_of_line);
-            for(let i = 2; i < 7; i = i + 2){
+            for (let i = 2; i < 7; i = i + 2) {
                 let faces = parts_of_line[i].split('/')
                 let faceIndex = parseInt(faces[0]);
                 let vertIndex = (faceIndex - 1) * 3;
-                let UVIndex = (parseInt(faces[1])-1) * 2;
-                let normIndex = (parseInt(faces[2]-1)) * 3;
-                finalVerts.push(-verts[vertIndex], verts[vertIndex+1], verts[vertIndex+2], vertUVs[UVIndex], 1 - vertUVs[UVIndex + 1], -vertNorms[normIndex], vertNorms[normIndex + 1], vertNorms[normIndex + 2]);
-                
+                let UVIndex = (parseInt(faces[1]) - 1) * 2;
+                let normIndex = (parseInt(faces[2] - 1)) * 3;
+                finalVerts.push(-verts[vertIndex], verts[vertIndex + 1], verts[vertIndex + 2], vertUVs[UVIndex], 1 - vertUVs[UVIndex + 1], -vertNorms[normIndex], vertNorms[normIndex + 1], vertNorms[normIndex + 2]);
+
             }
-            indis.push(faceNum.val, faceNum.val-2, faceNum.val-1);
+            indis.push(faceNum.val, faceNum.val - 2, faceNum.val - 1);
             faceNum.val += 3;
         }
-        else if(line[0] === "vt"){ //vertex UVs
+        else if (line[0] === "vt") { //vertex UVs
             //line = line.trim();
             let parts_of_line = line; //.split(/(\s+)/);
-            for(let i = 2; i < 5; i = i + 2){
+            for (let i = 2; i < 5; i = i + 2) {
                 vertUVs.push(parseFloat(parts_of_line[i]));
             }
         }
-        else if(line[0] === "vn"){ //vertex normals
+        else if (line[0] === "vn") { //vertex normals
             let parts_of_line = line; //.split(/(\s+)/);
-            for(let i = 2; i < 7; i = i + 2){
+            for (let i = 2; i < 7; i = i + 2) {
                 vertNorms.push(parseFloat(parts_of_line[i]));
             }
         }
@@ -276,31 +276,31 @@ class Mesh {
      * @param {WebGLProgram} program
      * @param {function} f the function to call and give mesh to when finished.
      */
-    static from_obj_file( gl, file_name, program, f, material) { //f is callback for when its done loading mesh, f should be setting mesh variable to non null need to write the function
+    static from_obj_file(gl, file_name, program, f, material) { //f is callback for when its done loading mesh, f should be setting mesh variable to non null need to write the function
         let request = new XMLHttpRequest();
-        
+
         // the function that will be called when the file is being loaded
-        request.onreadystatechange = function() {
+        request.onreadystatechange = function () {
             // console.log( request.readyState );
 
-            if( request.readyState != 4 ) { return; }
-            if( request.status != 200 ) { 
-                throw new Error( 'HTTP error when opening .obj file: ', request.statusText); 
+            if (request.readyState != 4) { return; }
+            if (request.status != 200) {
+                throw new Error('HTTP error when opening .obj file: ', request.statusText);
             }
 
             // now we know the file exists and is ready
-			// load the file 
-            let loaded_mesh = Mesh.from_obj_text( gl, program, request.responseText, material );
+            // load the file 
+            let loaded_mesh = Mesh.from_obj_text(gl, program, request.responseText, material);
 
-            console.log( 'loaded ', file_name );
-            f( loaded_mesh );
+            console.log('loaded ', file_name);
+            f(loaded_mesh);
             return;
         };
 
-        
-        request.open( 'GET', file_name ); // initialize request. 
+
+        request.open('GET', file_name); // initialize request. 
         request.send();                   // execute request
     }
-     
+
 }
 
